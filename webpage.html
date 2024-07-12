@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Engineers Health Monitor</title>
+    <style>
+        body {
+            font-family: "Arial", sans-serif;
+            background: linear-gradient(to right, #1e3c72, #9b306b, #f5b700);
+            color: #343a40;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        h1 span {
+            display: block;
+        }
+
+        .highlight {
+            color: white;
+            text-shadow: 3px 3px 0 #1e3c72, -1px -1px 0 #9b306b, 1px -1px 0 #f5b700, -1px 1px 0 #1e3c72, 1px 1px 0 #9b306b;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            margin: 20px;
+            padding: 20px;
+            width: 350px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease-in-out;
+        }
+
+        .flashing {
+            animation: flash 1s infinite alternate;
+        }
+
+        @keyframes flash {
+            from {
+                background-color: #ffffff;
+            }
+            to {
+                background-color: #ff0000;
+            }
+        }
+
+        .card h2 {
+            color: #007bff;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            color: #6c757d;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 250px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .card:nth-child(1) .chart-container {
+            background: linear-gradient(to top, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+        }
+
+        .card:nth-child(2) .chart-container {
+            background: linear-gradient(to top, #a1c4fd 0%, #c2e9fb 100%);
+        }
+
+        .card:nth-child(3) .chart-container {
+            background: linear-gradient(to top, #d4fc79 0%, #96e6a1 100%);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        canvas:hover {
+            transform: scale(1.1);
+        }
+
+        .doctor-symbol {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 30px;
+            height: 30px;
+        }
+        .copyright {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: #fff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        <span class="highlight">Team Engineers</span>
+        <span>Health Monitor</span>
+    </h1>
+    <div class="container">
+        <div class="card" id="heartRateCard">
+            <h2>Heart Rate</h2>
+            <p id="heartRate">-- bpm</p>
+            <div class="chart-container">
+                <canvas id="heartRateChart"></canvas>
+            </div>
+        </div>
+        <div class="card" id="spo2Card">
+            <h2>SpO2</h2>
+            <p id="spo2">-- %</p>
+            <div class="chart-container">
+                <canvas id="spo2Chart"></canvas>
+            </div>
+        </div>
+        <div class="card" id="ecgCard">
+            <h2>ECG Value</h2>
+            <p id="ecgValue">--</p>
+            <div class="chart-container">
+                <canvas id="ecgChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <img class="doctor-symbol" src="C:\Users\HP\Downloads\doc.png" alt="Doctor Symbol">
+    <div class="copyright">
+        &copy;2024 Team Engineers Health Monitor
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        var heartRateChart;
+        var spo2Chart;
+        var ecgChart;
+        var heartRateData = [];
+        var spo2Data = [];
+        var ecgData = [];
+        var labels = [];
+        var ctxHeartRate = document.getElementById('heartRateChart').getContext('2d');
+        var ctxSpO2 = document.getElementById('spo2Chart').getContext('2d');
+        var ctxECG = document.getElementById('ecgChart').getContext('2d');
+
+        heartRateChart = new Chart(ctxHeartRate, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Heart Rate',
+                    data: heartRateData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        spo2Chart = new Chart(ctxSpO2, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'SpO2',
+                    data: spo2Data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        ecgChart = new Chart(ctxECG, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'ECG Value',
+                    data: ecgData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        function updateData() {
+            fetch('/data')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('heartRate').innerText = data.heartRate + ' bpm';
+                    document.getElementById('spo2').innerText = data.spo2 + ' %';
+                    document.getElementById('ecgValue').innerText = data.ecg;
+
+                    // Update chart data
+                    if (heartRateData.length >= 10) {
+                        heartRateData.shift();
+                        spo2Data.shift();
+                        ecgData.shift();
+                        labels.shift();
+                    }
+                    heartRateData.push(data.heartRate);
+                    spo2Data.push(data.spo2);
+                    ecgData.push(data.ecg);
+                    labels.push(new Date().toLocaleTimeString());
+
+                    heartRateChart.data.labels = labels;
+                    heartRateChart.data.datasets[0].data = heartRateData;
+                    heartRateChart.update();
+
+                    spo2Chart.data.labels = labels;
+                    spo2Chart.data.datasets[0].data = spo2Data;
+                    spo2Chart.update();
+
+                    ecgChart.data.labels = labels;
+                    ecgChart.data.datasets[0].data = ecgData;
+                    ecgChart.update();
+
+                    // Check heart rate and ECG thresholds
+                    var heartRateCard = document.getElementById('heartRateCard');
+                    if (data.heartRate > 90) {
+                        heartRateCard.classList.add('flashing');
+                    } else {
+                        heartRateCard.classList.remove('flashing');
+                    }
+
+                    var ecgCard = document.getElementById('ecgCard');
+                    if (data.ecg > 350) {
+                        ecgCard.classList.add('flashing');
+                    } else {
+                        ecgCard.classList.remove('flashing');
+                    }
+
+                    setTimeout(updateData, 1000); // Update every 1 second
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        updateData(); // Initial call to start updating
+    </script>
+</body>
+</html>
